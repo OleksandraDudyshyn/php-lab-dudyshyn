@@ -1,0 +1,56 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Покупець" as Customer
+actor "Фармацевт" as Pharmacist
+actor "Адміністратор" as Admin
+
+Admin --|> Pharmacist
+
+rectangle "Електронна система продажу ліків в аптеці" {
+    usecase "Знайти лікарський засіб" as UC_Search
+    usecase "Знайти за категорією" as UC_SearchCat
+    usecase "Знайти за діючою речовиною" as UC_SearchSub
+    usecase "Переглянути кошик" as UC_Cart
+    usecase "Оформити замовлення" as UC_Order
+    usecase "Оплатити замовлення онлайн" as UC_Pay
+    usecase "Надати електронний рецепт" as UC_Presc
+    usecase "Застосувати промокод" as UC_Promo
+    usecase "Авторизуватись у системі" as UC_Auth
+
+    usecase "Перевірити рецепт клієнта" as UC_VerifyPresc
+    usecase "Оновити складські запаси" as UC_Stock
+    usecase "Списати прострочені ліки" as UC_WriteOff
+    usecase "Змінити статус замовлення" as UC_Status
+
+    usecase "Керувати каталогом та категоріями" as UC_Catalog
+    usecase "Керувати обліковими записами" as UC_Users
+    usecase "Сформувати звіт з продажів" as UC_Report
+}
+
+Customer --> UC_Search
+Customer --> UC_Cart
+Customer --> UC_Order
+
+UC_SearchCat --|> UC_Search
+UC_SearchSub --|> UC_Search
+
+UC_Order ..> UC_Auth : <<include>>
+UC_Order ..> UC_Pay : <<include>>
+UC_Presc ..> UC_Order : <<extend>>
+UC_Promo ..> UC_Order : <<extend>>
+
+Pharmacist --> UC_VerifyPresc
+Pharmacist --> UC_Stock
+Pharmacist --> UC_Status
+
+UC_VerifyPresc ..> UC_Auth : <<include>>
+UC_Stock ..> UC_Auth : <<include>>
+UC_WriteOff ..> UC_Stock : <<extend>>
+
+Admin --> UC_Catalog
+Admin --> UC_Users
+Admin --> UC_Report
+UC_Report ..> UC_Auth : <<include>>
+@enduml
