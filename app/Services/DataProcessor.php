@@ -6,7 +6,9 @@ namespace App\Services;
 
 class DataProcessor
 {
-    // Таблиця 3.2 (Задача 5): Індекси елементів, які більші за свого правого сусіда, та їх кількість.
+    /**
+     * Таблиця 3.2 (Задача 5): Індекси елементів, які більші за свого правого сусіда, та їх кількість.
+     */
     public function findGreaterThanRightNeighbor(array $numbers): array
     {
         $indices = [];
@@ -24,7 +26,9 @@ class DataProcessor
         ];
     }
 
-    //Таблиця 3.3 (Задача 7): Слова тексту, де перша буква одного слова співпадає з останньою буквою наступного.
+    /**
+     * Таблиця 3.3 (Задача 7): Слова тексту, де перша буква одного слова співпадає з останньою буквою наступного.
+     */
     public function findMatchingBoundaryWords(string $text): array
     {
         $words = preg_split('/\s+/u', trim($text)) ?: [];
@@ -43,7 +47,9 @@ class DataProcessor
         return $matched;
     }
 
-    // Таблиця 3.4 (Задача 4): Перемішати символи у кожному слові рядка, крім першого і останнього слів.
+    /**
+     * Таблиця 3.4 (Задача 4): Перемішати символи у кожному слові рядка, крім першого і останнього слів.
+     */
     public function shuffleMiddleWordsCharacters(string $sentence): string
     {
         $words = explode(' ', trim($sentence));
@@ -55,6 +61,9 @@ class DataProcessor
             $words[$i] = implode('', $chars);
         }
 
+        return implode(' ', $words);
+    }
+}
         return implode(' ', $words);
     }
 }
