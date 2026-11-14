@@ -64,6 +64,3 @@ class DataProcessor
         return implode(' ', $words);
     }
 }
-        return implode(' ', $words);
-    }
-}
