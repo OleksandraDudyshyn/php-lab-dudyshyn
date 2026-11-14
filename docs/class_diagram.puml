@@ -1,0 +1,157 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+abstract class User {
+    +id: Int
+    +name: String
+    +email: String
+    +passwordHash: String
+    +phone: String
+    +login(email: String, password: String): Boolean
+    +logout(): void
+    +updateProfile(name: String, phone: String): Boolean
+    +resetPassword(email: String): Boolean
+    +getRole(): String
+}
+
+class Customer {
+    +customerId: Int
+    +deliveryAddress: String
+    +bonusPoints: Float
+    +birthDate: Date
+    +isVerified: Boolean
+    +searchMedicine(query: String): List<Medicine>
+    +addToCart(medicineId: Int, qty: Int): void
+    +createOrder(): Order
+    +uploadPrescription(code: String): Prescription
+    +getOrderHistory(): List<Order>
+}
+
+class Pharmacist {
+    +pharmacistId: Int
+    +licenseNumber: String
+    +shiftSchedule: String
+    +department: String
+    +hireDate: Date
+    +verifyPrescription(prescriptionId: Int): Boolean
+    +updateStock(medicineId: Int, qty: Int): void
+    +processOrder(orderId: Int): Boolean
+    +writeOffExpired(medicineId: Int): void
+    +consultCustomer(customerId: Int): void
+}
+
+class Category {
+    +id: Int
+    +name: String
+    +slug: String
+    +description: String
+    +isActive: Boolean
+    +addMedicine(medicine: Medicine): void
+    +removeMedicine(medicineId: Int): void
+    +getMedicines(): List<Medicine>
+    +updateCategory(name: String, desc: String): void
+    +deactivate(): void
+}
+
+class Medicine {
+    +id: Int
+    +name: String
+    +activeSubstance: String
+    +price: Float
+    +stockQuantity: Int
+    +requiresPrescription: Boolean
+    +checkAvailability(qty: Int): Boolean
+    +updatePrice(newPrice: Float): void
+    +decreaseStock(qty: Int): void
+    +increaseStock(qty: Int): void
+    +getDetails(): String
+}
+
+class Prescription {
+    +id: Int
+    +prescriptionCode: String
+    +doctorName: String
+    +issueDate: Date
+    +expiryDate: Date
+    +status: String
+    +validateCode(): Boolean
+    +checkExpiry(): Boolean
+    +markAsUsed(): void
+    +getAssignedMedicine(): Medicine
+    +cancelPrescription(): void
+}
+
+class Order {
+    +id: Int
+    +orderNumber: String
+    +createdAt: DateTime
+    +totalAmount: Float
+    +status: String
+    +calculateTotal(): Float
+    +addItem(medicine: Medicine, qty: Int): OrderItem
+    +removeItem(itemId: Int): void
+    +changeStatus(newStatus: String): void
+    +cancelOrder(): Boolean
+}
+
+class OrderItem {
+    +id: Int
+    +orderId: Int
+    +medicineId: Int
+    +quantity: Int
+    +unitPrice: Float
+    +getSubtotal(): Float
+    +updateQuantity(newQty: Int): void
+    +getMedicineInfo(): String
+    +applyDiscount(percent: Float): Float
+    +validateStock(): Boolean
+}
+
+class Payment {
+    +id: Int
+    +orderId: Int
+    +amount: Float
+    +paymentMethod: String
+    +transactionStatus: String
+    +paidAt: DateTime
+    +processPayment(): Boolean
+    +refundPayment(): Boolean
+    +generateReceipt(): String
+    +verifyTransaction(txId: String): Boolean
+    +getPaymentStatus(): String
+}
+
+class OrderController {
+    +request: Request
+    +orderService: String
+    +authMiddleware: String
+    +responseFormat: String
+    +errorLogger: String
+    +index(): Response
+    +show(orderId: Int): Response
+    +store(request: Request): Response
+    +updateStatus(orderId: Int, status: String): Response
+    +destroy(orderId: Int): Response
+}
+
+' Наслідування (Generalization)
+Customer --|> User : наслідує
+Pharmacist --|> User : наслідує
+
+' Агрегація (Aggregation)
+Category "1" o-- "0..*" Medicine : містить
+
+' Композиція (Composition)
+Order "1" *-- "1..*" OrderItem : складається з
+Order "1" *-- "1" Payment : включає
+
+' Асоціація (Association)
+Customer "1" --> "0..*" Order : оформлює
+Customer "1" --> "0..*" Prescription : надає
+Pharmacist "1" --> "0..*" Prescription : перевіряє
+Pharmacist "1" --> "0..*" Order : комплектує
+OrderItem "0..*" --> "1" Medicine : посилається на
+Prescription "0..*" --> "1" Medicine : виписаний на
+OrderController ..> Order : керує
+OrderController ..> Medicine : перевіряє
+@enduml
