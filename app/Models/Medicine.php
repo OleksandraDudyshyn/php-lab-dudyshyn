@@ -4,26 +4,58 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Interfaces\ExportableInterface;
-use App\Traits\JsonExportTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Medicine extends AbstractEntity implements ExportableInterface
+class Medicine extends Model
 {
-    use JsonExportTrait;
+    use HasFactory;
 
-    public function __construct(
-        string $id,
-        string $createdAt,
-        protected string $name,
-        protected string $activeSubstance,
-        protected float $price,
-        protected int $stockQuantity
-    ) {
-        parent::__construct($id, $createdAt);
+    protected $fillable = [
+        'category_id',
+        'manufacturer_id',
+        'name',
+        'dosage',
+        'price',
+        'stock_quantity',
+        'is_prescription',
+    ];
+
+    protected $casts = [
+        'price' => 'float',
+        'stock_quantity' => 'integer',
+        'is_prescription' => 'boolean',
+    ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
-    public function getDetails(): string
+    public function manufacturer(): BelongsTo
     {
-        return "Препарат #{$this->id}: {$this->name} ({$this->activeSubstance}), ціна: {$this->price} грн, залишок: {$this->stockQuantity} шт. (додано {$this->createdAt})";
+        return $this->belongsTo(Manufacturer::class);
+    }
+
+    public function activeSubstances(): BelongsToMany
+    {
+        return $this->belongsToMany(ActiveSubstance::class)
+            ->withPivot('concentration')
+            ->withTimestamps();
+    }
+
+    public function orders(): BelongsToMany
+    {
+        return $this->belongsToMany(Order::class, 'order_items')
+            ->withPivot(['quantity', 'unit_price'])
+            ->withTimestamps();
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class);
     }
 }
