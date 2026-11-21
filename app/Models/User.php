@@ -1,23 +1,32 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models;
 
-class User extends AbstractEntity
-{
-    public function __construct(
-        string $id,
-        string $createdAt,
-        protected string $name,
-        protected string $email,
-        protected string $role
-    ) {
-        parent::__construct($id, $createdAt);
-    }
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-    public function getDetails(): string
+#[Fillable(['name', 'email', 'password'])]
+#[Hidden(['password', 'remember_token'])]
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return "Користувач #{$this->id}: {$this->name} ({$this->email}), роль: {$this->role} (реєстрація: {$this->createdAt})";
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }
