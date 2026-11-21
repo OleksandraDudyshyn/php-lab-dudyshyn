@@ -3,70 +3,97 @@
 declare(strict_types=1);
 
 require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/app/Tasks/Task1Composition.php';
+require_once __DIR__.'/app/Tasks/Task2Hierarchy.php';
 
-use App\Models\EntityArray;
-use App\Services\DataProcessor;
+use App\Core\Database;
+use App\Core\EntityFactory;
+use App\Models\Medicine;
+use App\Services\ConsoleLogger;
 use App\Services\EntityService;
-use Faker\Factory;
+use App\Services\FileLogger;
+use App\Tasks\Exam;
+use App\Tasks\FinalExam;
+use App\Tasks\Group;
+use App\Tasks\Student;
+use App\Tasks\Test;
+use App\Tasks\Triangle;
 
-$service = new EntityService;
-$processor = new DataProcessor;
-$faker = Factory::create();
+echo '<h1>Лабораторна робота №4 — ООП в PHP та патерни проєктування (Варіант 16)</h1>';
 
-echo '<h1>Лабораторна робота №3 — Варіант 16 (Електронна аптека)</h1>';
+// 1. Патерн Singleton (Database)
+echo '<h3>1. Патерн Singleton (Database):</h3>';
+$db1 = Database::getInstance();
+$db2 = Database::getInstance();
+$isSame = $db1 === $db2 ? 'Так (один екземпляр у пам’яті)' : 'Ні';
+echo "<p>Перевірка \$db1 === \$db2: <strong>{$isSame}</strong></p>";
 
-// Завдання 1
-echo EntityArray::renderHtml();
+// 2. Патерн Factory + Абстрактні класи + Трейт/Інтерфейс JSON-експорту
+echo '<h3>2. Патерн Factory, спадкування та JSON-експорт (Trait + Interface):</h3>';
+$medicine = EntityFactory::createEntity('medicine', [
+    'id' => 'MED-101',
+    'createdAt' => '2026-11-21',
+    'name' => 'Амоксиклав 625 мг',
+    'activeSubstance' => 'Амоксицилін + Клавуланова кислота',
+    'price' => 345.50,
+    'stockQuantity' => 42,
+]);
 
-// Завдання 2
-$totalPrice = $service->calculateOrderTotal(345.50, 3);
-echo '<h3>3. Користувацька функція зі строгою типізацією:</h3>';
-echo "<p>Вартість 3 упаковок по 345.50 грн: <strong>{$totalPrice} грн</strong></p>";
+$user = EntityFactory::createEntity('user', [
+    'id' => 'USR-01',
+    'createdAt' => '2026-11-21',
+    'name' => 'Дудишин Олександра',
+    'email' => 'dudyshyn@pharmacy.ua',
+    'role' => 'Фармацевт',
+]);
 
-// Завдання 3
-$generatedPrices = [];
-for ($i = 0; $i < 10; $i++) {
-    $generatedPrices[] = $faker->randomFloat(2, 100, 1200);
+echo "<p>{$medicine->getDetails()}</p>";
+echo "<p>{$user->getDetails()}</p>";
+
+if ($medicine instanceof Medicine) {
+    echo '<p><strong>Експорт моделі Medicine у JSON:</strong></p>';
+    echo '<pre>'.$medicine->exportToJson().'</pre>';
 }
 
-$minThreshold = 500.0;
-$expensiveMedicines = array_filter(
-    $generatedPrices,
-    function (float $price) use ($minThreshold): bool {
-        return $price > $minThreshold;
-    }
-);
+// 3. Патерн Dependency Injection (LoggerInterface + EntityService)
+echo '<h3>3. Патерн Dependency Injection (EntityService + LoggerInterface):</h3>';
+$consoleLogger = new ConsoleLogger;
+$entityService = new EntityService($consoleLogger);
+$entityService->processEntity($medicine);
+$entityService->calculateOrderTotal(345.50, 2);
 
-echo '<h3>4. Генерація цін (Faker) та фільтрація анонімною функцією (use):</h3>';
-echo '<p>Усі згенеровані ціни (10 шт.): '.implode(' грн, ', $generatedPrices).' грн</p>';
-echo "<p>Препарати дорожчі за {$minThreshold} грн: <strong>".implode(' грн, ', $expensiveMedicines).' грн</strong></p>';
+$fileLogger = new FileLogger;
+$fileService = new EntityService($fileLogger);
+$fileService->applyDiscount(691.00, 10.0);
 
-// Завдання 4
-echo '<h3>5. Обробка винятків (try-catch-finally):</h3>';
-try {
-    echo '<p>Спроба застосувати знижку 150% до суми 1000 грн...</p>';
-    $discounted = $service->applyDiscount(1000.0, 150.0);
-    echo "<p>Ціна зі знижкою: {$discounted} грн</p>";
-} catch (Exception $e) {
-    echo "<p style='color: red;'><strong>Помилка:</strong> {$e->getMessage()}</p>";
-} finally {
-    echo '<p><em>Завершення спроби розрахунку.</em></p>';
+// 4. Індивідуальне завдання (Варіант 16)
+echo '<h3>4. Індивідуальне завдання — Композиція класів Student та Group (Табл. 4.2 №2):</h3>';
+$group = new Group(41, 'КН-41');
+$group->addStudent(new Student(1, 'Олександра', 'Дудишин', '2005-04-12'));
+$group->addStudent(new Student(2, 'Андрій', 'Коваленко', '2005-08-23'));
+$group->addStudent(new Student(3, 'Марія', 'Мельник', '2005-02-10'));
+$group->removeStudent(2);
+$found = $group->searchStudent('Дудишин');
+
+echo "<p>Група {$group->name} (після видалення студента #2): ";
+foreach ($group->getStudents() as $student) {
+    echo '<br>• '.$student->getFullInfo();
 }
+echo '</p>';
+echo '<p>Результат пошуку за запитом «Дудишин»: <strong>'.$found[0]->getFullInfo().'</strong></p>';
 
-// Завдання 5 (Варіант 16)
-echo '<h3>6. Індивідуальне алгоритмічне завдання (Варіант 16):</h3>';
+echo '<h3>5. Індивідуальне завдання — Ієрархія класів Випробувань (Табл. 4.3 №5):</h3>';
+$test = new Test('Модульний тест з PHP');
+$exam = new Exam('Семестровий іспит з Веб-програмування');
+$finalExam = new FinalExam('Кваліфікаційний випускний іспит');
 
-$arrayInput = [15, 8, 22, 19, 5, 12, 4];
-$task1Result = $processor->findGreaterThanRightNeighbor($arrayInput);
-echo '<p><strong>Задача 3.2 (№5):</strong> Масив: ['.implode(', ', $arrayInput).']<br>';
-echo 'Індекси елементів більших за правого сусіда: '.implode(', ', $task1Result['indices'])." (Кількість: {$task1Result['count']})</p>";
+echo "<ul>
+    <li>{$test->getTitle()} (Test): прохідний бал = <strong>{$test->getPassingScore()}</strong></li>
+    <li>{$exam->getTitle()} (Exam): прохідний бал = <strong>{$exam->getPassingScore()}</strong></li>
+    <li>{$finalExam->getTitle()} (FinalExam): прохідний бал = <strong>{$finalExam->getPassingScore()}</strong></li>
+</ul>";
 
-$textInput = 'аптека аналіз сироп парацетамол ліки рецепт';
-$task2Result = $processor->findMatchingBoundaryWords($textInput);
-echo "<p><strong>Задача 3.3 (№7):</strong> Текст: «{$textInput}»<br>";
-echo 'Пари слів (перша літера = остання літера наступного): '.implode('; ', $task2Result).'</p>';
-
-$sentenceInput = 'Електронна система продажу ліків працює цілодобово';
-$task3Result = $processor->shuffleMiddleWordsCharacters($sentenceInput);
-echo "<p><strong>Задача 3.4 (№4):</strong> Вихідний рядок: «{$sentenceInput}»<br>";
-echo "Результат перемішування середніх слів: «{$task3Result}»</p>";
+echo '<h3>6. Індивідуальне завдання — Клас Triangle з readonly-сторонами (Табл. 4.4 №2):</h3>';
+$triangle = new Triangle(3.0, 4.0, 5.0);
+echo "<p>Трикутник зі сторонами a = {$triangle->a}, b = {$triangle->b}, c = {$triangle->c}:<br>";
+echo "Периметр: <strong>{$triangle->getPerimeter()}</strong>, Площа (за формулою Герона): <strong>{$triangle->getArea()}</strong></p>";
